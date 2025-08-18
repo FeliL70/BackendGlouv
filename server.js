@@ -170,3 +170,55 @@ app.get('/api/perfil', async (req, res) => {
 
   res.json(data);
 });
+
+//
+
+app.get('/api/golpes/suma', async (req, res) => {
+  const { id_usuarioEntrenamiento } = req.query;
+
+  if (!id_usuarioEntrenamiento) {
+    return res.status(400).json({ error: "Falta el id_usuarioEntrenamiento" });
+  }
+
+  const { data, error } = await supabase
+    .from('Golpes')
+    .select('suma_fuerza:sum(fuerza)')
+    .eq('id_usuarioEntrenamiento', id_usuarioEntrenamiento)
+    .single();
+
+  if (error) {
+    console.error("Error sumando golpes:", error);
+    return res.status(500).json({ error: "No se pudo calcular la suma" });
+  }
+
+  res.json({
+    id_usuarioEntrenamiento,
+    sumaFuerza: data?.suma_fuerza || 0
+  });
+});
+
+
+//
+
+app.post('/api/golpes', async (req, res) => {
+  const { id_usuarioEntrenamiento, fuerza, id_guante} = req.body;
+
+  if (!id_usuarioEntrenamiento || !fuerza) {
+    return res.status(400).json({ error: "Faltan campos obligatorios: id_usuarioEntrenamiento o fuerza" });
+  }
+
+  const { data, error } = await supabase
+    .from('Golpes')
+    .insert([{ id_usuarioEntrenamiento, fuerza, id_guante}])
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error insertando golpe:", error);
+    return res.status(500).json({ error: "No se pudo registrar el golpe" });
+  }
+
+  res.json({
+    golpe: data
+  });
+});
