@@ -197,7 +197,6 @@ app.get('/api/golpes/suma', async (req, res) => {
   });
 });
 
-
 //
 
 app.post('/api/golpes', async (req, res) => {
@@ -222,3 +221,67 @@ app.post('/api/golpes', async (req, res) => {
     golpe: data
   });
 });
+
+//
+
+app.get('/api/ranking-golpes', async (req, res) => {
+  const { id } = req.params;
+  const { data: usuariosTorneo, error: errorTorneo } = await supabase
+    .from('UsuarioTorneo')
+    .select(`
+      id_usuario,
+      Usuarios (
+        id,
+        nombreCompleto,
+        email,
+        fotoDePerfil
+      )
+    `)
+    .eq('id_torneo', id);
+
+    if (errorTorneo) {
+      console.error("Error obteniendo usuarios del torneo:", errorTorneo);
+      return res.status(500).json({ error: "No se pudieron obtener los usuarios del torneo" });
+    }
+  
+    if (!usuariosTorneo || usuariosTorneo.length === 0) {
+      return res.json([]);
+    }
+
+    const rankingMap = {};
+    usuariosTorneo.forEach(u => {
+      rankingMap[u.Usuarios.id] = {
+        id: u.Usuarios.id,
+        nombreCompleto: u.Usuarios.nombreCompleto,
+        email: u.Usuarios.email,
+        fotoDePerfil: u.Usuarios.fotoDePerfil,
+        totalFuerza: 0
+      };
+    });
+  
+    const { data: golpes, error: errorGolpes } = await supabase
+      .from('Golpes')
+      .select(`
+        fuerza,
+        UsuarioEntrenamiento (
+          id_usuario
+        )
+      `)
+      .in('UsuarioEntrenamiento.id_usuario', Object.keys(rankingMap));
+  
+    if (errorGolpes) {
+      console.error("Error obteniendo golpes:", errorGolpes);
+      return res.status(500).json({ error: "No se pudieron obtener los golpes" });
+    }
+  
+    golpes.forEach(golpe => {
+      const idUsuario = golpe.UsuarioEntrenamiento.id_usuario;
+      if (rankingMap[idUsuario]) {
+        rankingMap[idUsuario].totalFuerza += golpe.fuerza;
+      }
+    });
+  
+    const ranking = Object.values(rankingMap).sort((a, b) => b.totalFuerza - a.totalFuerza);
+  
+    res.json(ranking);
+  });
