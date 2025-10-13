@@ -2,11 +2,12 @@ import supabase from '../configs/supabase.js';
 
 export const getEntrenamientos = async (req, res) => {
   const idsParam = req.query.ids;
+  console.log("ids", idsParam)
   const ids = idsParam ? idsParam.split(',').map(id => parseInt(id.trim())) : null;
 
   let query = supabase
     .from('Entrenamientos')
-    .select('id, nombre, foto, descripcion, duracion');
+    .select('*');
 
   if (ids && ids.length > 0) {
     query = query.in('id', ids);
