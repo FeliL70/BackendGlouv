@@ -10,6 +10,7 @@ import { loginUser, registerUser } from './controllers/authController.js';
 import { getPerfil } from './controllers/userController.js';
 import { getSumaGolpes, postGolpe, getRankingGolpes } from './controllers/golpesController.js';
 import {getEstadisticasDelDia} from './controllers/calendarioController.js';
+import {getTorneoById, getParticipantesTorneo, getRankingsGlobales } from './controllers/torneosController.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -37,7 +38,11 @@ api.post('/golpes', postGolpe);
 
 api.get('/ranking-golpes/:id', getRankingGolpes);
 
-api.get('/estadisticasDelDia', getEstadisticasDelDia);
+api.get('/estadisticasDelDia/', getEstadisticasDelDia);
+
+api.get('/torneo/:id_torneo', getTorneoById);
+api.get('/torneo/:id_torneo/participantes', getParticipantesTorneo);
+api.get('/rankingsGlobales', getRankingsGlobales);
 
 app.use('/api', api);
 
