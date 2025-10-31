@@ -9,6 +9,7 @@ import { getTiempoEntrenado } from './controllers/tiempoController.js';
 import { loginUser, registerUser } from './controllers/authController.js';
 import { getPerfil } from './controllers/userController.js';
 import { getSumaGolpes, postGolpe, getRankingGolpes } from './controllers/golpesController.js';
+import {getEstadisticasDelDia} from './controllers/calendarioController.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -35,6 +36,8 @@ api.get('/golpes/suma', getSumaGolpes);
 api.post('/golpes', postGolpe);
 
 api.get('/ranking-golpes/:id', getRankingGolpes);
+
+api.get('/estadisticasDelDia', getEstadisticasDelDia);
 
 app.use('/api', api);
 
