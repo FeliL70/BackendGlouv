@@ -38,7 +38,7 @@ api.post('/golpes', postGolpe);
 
 api.get('/ranking-golpes/:id', getRankingGolpes);
 
-api.get('/estadisticasDelDia/', getEstadisticasDelDia);
+api.get('/estadisticasDelDia', getEstadisticasDelDia);
 
 api.get('/torneo/:id_torneo', getTorneoById);
 api.get('/torneo/:id_torneo/participantes', getParticipantesTorneo);
