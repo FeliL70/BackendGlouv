@@ -9,7 +9,7 @@ export const getPerfil = async (req, res) => {
 
   const { data, error } = await supabase
     .from('Usuarios')
-    .select('fotoDePerfil, nombreCompleto, fotoDeFondo, fechaDeNacimiento, email, descripcion')
+    .select('fotoDePerfil, nombreCompleto, fotoDeFondo, fechaDeNacimiento, email, descripcion, id_tipoDeCuerpo, peso')
     .eq('id', id)
     .single();
 

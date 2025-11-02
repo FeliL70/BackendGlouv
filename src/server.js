@@ -9,8 +9,11 @@ import { getTiempoEntrenado } from './controllers/tiempoController.js';
 import { loginUser, registerUser } from './controllers/authController.js';
 import { getPerfil } from './controllers/userController.js';
 import { getSumaGolpes, postGolpe, getRankingGolpes } from './controllers/golpesController.js';
-import {getEstadisticasDelDia} from './controllers/calendarioController.js';
-import {getTorneoById, getParticipantesTorneo, getRankingsGlobales } from './controllers/torneosController.js';
+import {getEstadisticasPorFecha} from './controllers/calendarioController.js';
+
+import {crearUsuarioEntrenamiento, actualizarTiempoEntrenamiento} from './controllers/usuarioEntrenamientoController.js';
+import { getTipoDeCuerpo, getTiposDeCuerpo } from './controllers/tipoDeCuerpoController.js';
+import { getPaises } from './controllers/paisesController.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -38,11 +41,15 @@ api.post('/golpes', postGolpe);
 
 api.get('/ranking-golpes/:id', getRankingGolpes);
 
-api.get('/estadisticasDelDia', getEstadisticasDelDia);
+api.get('/estadisticasPorFecha', getEstadisticasPorFecha);
 
-api.get('/torneo/:id_torneo', getTorneoById);
-api.get('/torneo/:id_torneo/participantes', getParticipantesTorneo);
-api.get('/rankingsGlobales', getRankingsGlobales);
+api.post('/usuarioEntrenamiento', crearUsuarioEntrenamiento);
+api.put('/usuarioEntrenamiento/:id', actualizarTiempoEntrenamiento);
+
+api.get('/tipoDeCuerpo', getTipoDeCuerpo);
+api.get('/tiposDeCuerpo', getTiposDeCuerpo);
+
+api.get('/paises', getPaises);
 
 app.use('/api', api);
 

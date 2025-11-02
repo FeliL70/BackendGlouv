@@ -22,12 +22,17 @@ export const loginUser = async (req, res) => {
 };
 
 export const registerUser = async (req, res) => {
-  const { email, nombre, password } = req.body;
+  const { email, nombreCompleto, Contrasenia, id_pais, id_tipoDeCuerpo, peso } = req.body;
 
-  if (!email || !nombre || !password) {
+  if (!email || !nombreCompleto || !Contrasenia || !id_pais || !id_tipoDeCuerpo || !peso) {
     return res.status(400).json({ error: "Faltan campos obligatorios" });
   }
 
+  if (peso < 40 || peso > 200) {
+    return res.status(400).json({ error: "El peso debe estar entre 40 y 200 kg" });
+  }
+
+  // Verificar si el email ya está registrado
   const { data: existingUser, error: lookupError } = await supabase
     .from('Usuarios')
     .select('*')
@@ -35,6 +40,7 @@ export const registerUser = async (req, res) => {
     .single();
 
   if (lookupError && lookupError.code !== 'PGRST116') {
+    console.error("Error verificando usuario existente:", lookupError);
     return res.status(500).json({ error: "Error verificando usuario existente" });
   }
 
@@ -42,14 +48,24 @@ export const registerUser = async (req, res) => {
     return res.status(409).json({ error: "Ya existe un usuario con ese email" });
   }
 
+  // Insertar nuevo usuario
   const { data, error } = await supabase
     .from('Usuarios')
-    .insert([{ email, nombre, Contrasenia: password }])
+    .insert([
+      {
+        email,
+        nombreCompleto,
+        Contrasenia,
+        id_pais,
+        id_tipoDeCuerpo,
+        peso,
+      },
+    ])
     .select()
     .single();
 
   if (error) {
-    console.error('Error al registrar usuario:', error);
+    console.error("Error al registrar usuario:", error);
     return res.status(500).json({ error: "No se pudo registrar el usuario" });
   }
 
