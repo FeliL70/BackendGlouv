@@ -1,6 +1,6 @@
 import supabase from '../configs/supabase.js';
 
-//Obtener todos los torneos
+/*Obtener todos los torneos*/
 export const getTorneos = async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -15,12 +15,12 @@ export const getTorneos = async (req, res) => {
   }
 };
 
-//Crear torneo
+/*Crear torneo*/
 export const crearTorneo = async (req, res) => {
-  const { nombre, contrasenia, capacidad, tipoPrivacidad, duracion, descripcion, id_nivel } = req.body;
+  const { nombre, contrasenia, capacidad, tipoPrivacidad, duracion, descripcion, id_nivel, creadoPor } = req.body;
 
-  if (!nombre || !contrasenia) {
-    return res.status(400).json({ error: "Faltan datos: nombre o contraseña" });
+  if (!nombre || !contrasenia || !creadoPor) {
+    return res.status(400).json({ error: "Faltan datos: nombre, contraseña o creador" });
   }
 
   try {
@@ -33,7 +33,8 @@ export const crearTorneo = async (req, res) => {
         tipoPrivacidad: tipoPrivacidad || false,
         duracion: duracion || 7,
         descripcion: descripcion || '',
-        id_nivel: id_nivel || null
+        id_nivel: id_nivel || null,
+        creadoPor
       }])
       .select()
       .single();
@@ -46,7 +47,7 @@ export const crearTorneo = async (req, res) => {
   }
 };
 
-//Unirse a un torneo
+/*Unirse a un torneo*/
 export const unirseATorneo = async (req, res) => {
   const { id_usuario, nombre, contrasenia } = req.body;
 
@@ -55,19 +56,17 @@ export const unirseATorneo = async (req, res) => {
   }
 
   try {
-    //Buscar torneo
-    const { data: torneo, error: torneoError } = await supabase
+    const { data: torneo } = await supabase
       .from('Torneos')
       .select('id, nombre, contrasenia, capacidad')
       .eq('nombre', nombre)
       .eq('contrasenia', contrasenia)
       .maybeSingle();
 
-    if (torneoError || !torneo) {
+    if (!torneo) {
       return res.status(404).json({ error: "Torneo no encontrado o contraseña incorrecta" });
     }
 
-    //Verificar si ya está
     const { data: yaUnido } = await supabase
       .from('UsuarioTorneo')
       .select('id')
@@ -79,12 +78,9 @@ export const unirseATorneo = async (req, res) => {
       return res.status(400).json({ error: "El usuario ya está en este torneo" });
     }
 
-    //Insertar usuario
-    const { error: insertError } = await supabase
+    await supabase
       .from('UsuarioTorneo')
       .insert([{ id_usuario, id_torneo: torneo.id, puntuacion: 0 }]);
-
-    if (insertError) throw insertError;
 
     res.json({ mensaje: `Usuario unido al torneo ${torneo.nombre}` });
   } catch (error) {
@@ -93,14 +89,14 @@ export const unirseATorneo = async (req, res) => {
   }
 };
 
-//Ranking global (día, mes, total)
+/*Ranking Global (día, mes, total)*/
 export const getRankingGlobal = async (req, res) => {
   try {
     const hoy = new Date().toISOString().split('T')[0];
     const primerDiaMes = new Date();
     primerDiaMes.setDate(1);
 
-    //Día
+    //Ranking Día
     const { data: rankingDia, error: errorDia } = await supabase
       .from('UsuarioTorneo')
       .select('id_usuario, puntuacion, id_torneo, Usuarios (nombreCompleto, fotoDePerfil)')
@@ -110,7 +106,7 @@ export const getRankingGlobal = async (req, res) => {
 
     if (errorDia) throw errorDia;
 
-    //Mes
+    //Ranking Mes
     const { data: rankingMes, error: errorMes } = await supabase
       .from('UsuarioTorneo')
       .select('id_usuario, puntuacion, id_torneo, Usuarios (nombreCompleto, fotoDePerfil)')
@@ -120,7 +116,7 @@ export const getRankingGlobal = async (req, res) => {
 
     if (errorMes) throw errorMes;
 
-    //Total
+    //Ranking Total
     const { data: rankingTotal, error: errorTotal } = await supabase
       .from('UsuarioTorneo')
       .select('id_usuario, puntuacion, id_torneo, Usuarios (nombreCompleto, fotoDePerfil)')
@@ -140,7 +136,7 @@ export const getRankingGlobal = async (req, res) => {
   }
 };
 
-//Cargar puntos de un entrenamiento a un torneo
+/*Cargar puntos al torneo desde un entrenamiento*/
 export const cargarPuntosEntrenamiento = async (req, res) => {
   const { id_usuario, id_entrenamiento, id_torneo } = req.body;
 
@@ -149,7 +145,6 @@ export const cargarPuntosEntrenamiento = async (req, res) => {
   }
 
   try {
-    //Obtener entrenamiento
     const { data: usuarioEntrenamiento } = await supabase
       .from('UsuarioEntrenamiento')
       .select('id')
@@ -161,7 +156,6 @@ export const cargarPuntosEntrenamiento = async (req, res) => {
       return res.status(404).json({ error: "No se encontró el entrenamiento del usuario" });
     }
 
-    //Sumar fuerza total
     const { data: golpes } = await supabase
       .from('Golpes')
       .select('fuerza')
@@ -169,7 +163,6 @@ export const cargarPuntosEntrenamiento = async (req, res) => {
 
     const puntosEntrenamiento = golpes?.reduce((acc, g) => acc + (g.fuerza || 0), 0) || 0;
 
-    //Obtener usuario en torneo
     const { data: usuarioTorneo } = await supabase
       .from('UsuarioTorneo')
       .select('id, puntuacion')
@@ -181,7 +174,6 @@ export const cargarPuntosEntrenamiento = async (req, res) => {
       return res.status(404).json({ error: "El usuario no está registrado en el torneo" });
     }
 
-    //Actualizar puntuación
     const nuevaPuntuacion = usuarioTorneo.puntuacion + puntosEntrenamiento;
 
     await supabase
@@ -195,8 +187,96 @@ export const cargarPuntosEntrenamiento = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Error al cargar puntos:", error);
+    console.error("Error cargando puntos:", error);
     res.status(500).json({ error: "No se pudieron cargar los puntos al torneo" });
   }
 };
 
+/*Torneos creados por el usuario                                                      YA APARECEN EN LOS Q EL USUARIO PARTICIPA
+export const getTorneosCreados = async (req, res) => {
+  const { id_usuario } = req.query;
+
+  if (!id_usuario) {
+    return res.status(400).json({ error: "Falta el id_usuario" });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('Torneos')
+      .select('id, nombre, capacidad, tipoPrivacidad, duracion, descripcion, id_nivel')
+      .eq('creadoPor', id_usuario);
+
+    if (error) throw error;
+
+    res.json(data);
+  } catch (error) {
+    console.error("Error obteniendo torneos creados:", error);
+    res.status(500).json({ error: "No se pudieron obtener los torneos creados" });
+  }
+};
+*/
+/*Torneos donde participa un usuario*/
+export const getTorneosDelUsuario = async (req, res) => {
+  const { id_usuario } = req.query;
+
+  if (!id_usuario) {
+    return res.status(400).json({ error: "Falta el id_usuario" });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('UsuarioTorneo')
+      .select(`
+        id_torneo,
+        puntuacion,
+        Torneos (
+          id,
+          nombre,
+          capacidad,
+          tipoPrivacidad,
+          duracion,
+          descripcion
+        )
+      `)
+      .eq('id_usuario', id_usuario);
+
+    if (error) throw error;
+
+    res.json(data);
+  } catch (error) {
+    console.error("Error obteniendo torneos del usuario:", error);
+    res.status(500).json({ error: "No se pudieron obtener los torneos donde participa" });
+  }
+};
+
+/*Ver participantes de un torneo*/
+export const getParticipantesTorneo = async (req, res) => {
+  const { id_torneo } = req.query;
+
+  if (!id_torneo) {
+    return res.status(400).json({ error: "Falta el id_torneo" });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('UsuarioTorneo')
+      .select(`
+        id_usuario,
+        puntuacion,
+        Usuarios (
+          nombreCompleto,
+          fotoDePerfil
+        )
+      `)
+      .eq('id_torneo', id_torneo)
+      .order('puntuacion', { ascending: false });
+
+    if (error) throw error;
+
+    res.json(data);
+
+  } catch (error) {
+    console.error("Error obteniendo participantes:", error);
+    res.status(500).json({ error: "No se pudieron obtener los participantes" });
+  }
+};
