@@ -1,0 +1,1 @@
+INSERT INTO "public"."Guantes" ("id", "id_usuario", "conectado", "nombre") VALUES ('1', '1', null, 'caste'), ('2', '2', null, 'felipe'), ('3', '3', null, 'eric');

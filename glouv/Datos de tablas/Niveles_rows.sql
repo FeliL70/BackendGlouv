@@ -1,0 +1,1 @@
+INSERT INTO "public"."Niveles" ("id", "nivel") VALUES ('1', 'Avanzado'), ('2', 'Intermedio'), ('3', 'Basico');

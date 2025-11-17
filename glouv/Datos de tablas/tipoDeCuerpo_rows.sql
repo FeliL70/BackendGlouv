@@ -1,0 +1,1 @@
+INSERT INTO "public"."tipoDeCuerpo" ("id", "cuerpo", "mult") VALUES ('1', 'Ectomorfo', '0.9'), ('2', 'Mesomorfo', '1'), ('3', 'Endomorfo', '1.1');

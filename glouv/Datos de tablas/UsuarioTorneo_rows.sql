@@ -1,0 +1,1 @@
+INSERT INTO "public"."UsuarioTorneo" ("id_usuario", "id_torneo") VALUES ('1', '1'), ('2', '1'), ('3', '1');
