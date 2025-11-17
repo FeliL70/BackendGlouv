@@ -7,13 +7,23 @@ dotenv.config();
 import { getEntrenamientos } from './controllers/entrenamientosController.js';
 import { getTiempoEntrenado } from './controllers/tiempoController.js';
 import { loginUser, registerUser } from './controllers/authController.js';
-import { getPerfil } from './controllers/userController.js';
 import { getSumaGolpes, postGolpe, getRankingGolpes } from './controllers/golpesController.js';
-import {getEstadisticasPorFecha} from './controllers/calendarioController.js';
+import { getPerfil } from './controllers/userController.js';
+import { getEstadisticasPorFecha } from './controllers/calendarioController.js';
 
-import {crearUsuarioEntrenamiento, actualizarTiempoEntrenamiento} from './controllers/usuarioEntrenamientoController.js';
+import { crearUsuarioEntrenamiento, actualizarTiempoEntrenamiento } from './controllers/usuarioEntrenamientoController.js';
 import { getTipoDeCuerpo, getTiposDeCuerpo } from './controllers/tipoDeCuerpoController.js';
 import { getPaises } from './controllers/paisesController.js';
+
+import {
+  getTorneos,
+  crearTorneo,
+  unirseATorneo,
+  getRankingGlobal,
+  cargarPuntosEntrenamiento,
+  getTorneosDelUsuario,
+  getParticipantesTorneo
+} from './controllers/torneosController.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -50,6 +60,14 @@ api.get('/tipoDeCuerpo', getTipoDeCuerpo);
 api.get('/tiposDeCuerpo', getTiposDeCuerpo);
 
 api.get('/paises', getPaises);
+
+api.get('/torneos', getTorneos);                          
+api.post('/torneos', crearTorneo);                        
+api.post('/torneos/unirse', unirseATorneo);               
+api.get('/torneos/ranking', getRankingGlobal);            
+api.post('/torneos/cargar-puntos', cargarPuntosEntrenamiento);
+api.get('/torneos/usuario', getTorneosDelUsuario);        
+api.get('/torneos/participantes', getParticipantesTorneo);
 
 app.use('/api', api);
 
