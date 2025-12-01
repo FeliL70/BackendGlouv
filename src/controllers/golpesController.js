@@ -96,6 +96,7 @@ export const getRankingGolpes = async (req, res) => {
     return res.status(500).json({ error: "No se pudieron obtener los golpes" });
   }
 
+
   golpes.forEach(golpe => {
     const idUsuario = golpe.UsuarioEntrenamiento.id_usuario;
     if (rankingMap[idUsuario]) {
@@ -106,4 +107,57 @@ export const getRankingGolpes = async (req, res) => {
   const ranking = Object.values(rankingMap).sort((a, b) => b.totalFuerza - a.totalFuerza);
 
   res.json(ranking);
+
+  //consigue el id_usuario a partir del id_usuarioEntrenamiento
+const { data: usuarioEntr, error: errUE } = await supabase
+.from('UsuarioEntrenamiento')
+.select('id_usuario')
+.eq('id', id_usuarioEntrenamiento)
+.single();
+
+if (errUE || !usuarioEntr) {
+return res.status(400).json({ error: 'UsuarioEntrenamiento no encontrado' });
+}
+
+const id_usuario = usuarioEntr.id_usuario;
+
+//consigue la suma total de fuerza de los golpes
+const { data: golpesData, error: golpesError } = await supabase
+.from('Golpes')
+.select('suma_fuerza:sum(fuerza)')
+.eq('id_usuarioEntrenamiento', id_usuarioEntrenamiento)
+.single();
+
+if (golpesError) {
+return res.status(400).json({ error: 'Error obteniendo golpes' });
+}
+
+//consigue los datos del usuario + país
+const { data: usuarioData, error: userError } = await supabase
+.from('Usuarios')
+.select(`
+  nombreCompleto,
+  email,
+  Paises (
+    pais
+  )
+`)
+.eq('id', id_usuario)
+.single();
+
+if (userError) {
+return res.status(400).json({ error: 'Error obteniendo datos del usuario' });
+}
+
+//arma objeto JSON final
+return res.json({
+suma_fuerza: golpesData.suma_fuerza,
+usuario: {
+  nombreCompleto: usuarioData.nombreCompleto,
+  email: usuarioData.email,
+  pais: usuarioData.Paises?.pais || null
+}
+});
+
+
 };
