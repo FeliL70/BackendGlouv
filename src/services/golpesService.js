@@ -1,89 +1,72 @@
-import supabase from '../configs/supabase.js';
+// src/services/golpesService.js
+import {
+  getUsuariosDelTorneo,
+  getGolpesDeUsuarios,
+  getUsuarioEntrenamientoById,
+  getSumaFuerzaUsuario,
+  getUsuarioDatos
+} from '../repositories/golpesRepository.js';
 
-export const getSumaGolpesService = async (id_usuarioEntrenamiento) => {
-  try {
-    const { data, error } = await supabase
-      .from('Golpes')
-      .select('suma_fuerza:sum(fuerza)')
-      .eq('id_usuarioEntrenamiento', id_usuarioEntrenamiento)
-      .single();
+export const obtenerRankingGolpes = async (id_torneo, id_usuarioEntrenamiento) => {
+  
+  // Obtener usuarios del torneo
+  const { data: usuariosTorneo, error: errorTorneo } = await getUsuariosDelTorneo(id_torneo);
 
-    if (error) throw error;
-    return { data: { sumaFuerza: data?.suma_fuerza || 0 } };
-  } catch (error) {
-    console.error("Error en getSumaGolpesService:", error);
-    return { error: "No se pudo calcular la suma" };
+  if (errorTorneo) throw new Error("No se pudieron obtener usuarios del torneo");
+
+  if (!usuariosTorneo || usuariosTorneo.length === 0) {
+    return { ranking: [], usuario: null, suma_fuerza: 0 };
   }
-};
 
-export const registrarGolpeService = async (id_usuarioEntrenamiento, fuerza, id_guante) => {
-  try {
-    const { data, error } = await supabase
-      .from('Golpes')
-      .insert([{ id_usuarioEntrenamiento, fuerza, id_guante }])
-      .select()
-      .single();
+  // Crear ranking base
+  const rankingMap = {};
+  const idUsuarios = [];
 
-    if (error) throw error;
-    return { data };
-  } catch (error) {
-    console.error("Error en registrarGolpeService:", error);
-    return { error: "No se pudo registrar el golpe" };
-  }
-};
+  usuariosTorneo.forEach(u => {
+    rankingMap[u.Usuarios.id] = {
+      id: u.Usuarios.id,
+      nombreCompleto: u.Usuarios.nombreCompleto,
+      email: u.Usuarios.email,
+      fotoDePerfil: u.Usuarios.fotoDePerfil,
+      totalFuerza: 0
+    };
+    idUsuarios.push(u.Usuarios.id);
+  });
 
-export const getRankingGolpesService = async (id_torneo) => {
-  try {
-    const { data: usuariosTorneo, error: errorTorneo } = await supabase
-      .from('UsuarioTorneo')
-      .select(`
-        id_usuario,
-        Usuarios (
-          id,
-          nombreCompleto,
-          email,
-          fotoDePerfil
-        )
-      `)
-      .eq('id_torneo', id_torneo);
+  // Obtener golpes de todos los usuarios del torneo
+  const { data: golpes, error: errorGolpes } = await getGolpesDeUsuarios(idUsuarios);
 
-    if (errorTorneo) throw errorTorneo;
-    if (!usuariosTorneo || usuariosTorneo.length === 0) return { data: [] };
+  if (errorGolpes) throw new Error("No se pudieron obtener los golpes");
 
-    const rankingMap = {};
-    usuariosTorneo.forEach(u => {
-      rankingMap[u.Usuarios.id] = {
-        id: u.Usuarios.id,
-        nombreCompleto: u.Usuarios.nombreCompleto,
-        email: u.Usuarios.email,
-        fotoDePerfil: u.Usuarios.fotoDePerfil,
-        totalFuerza: 0
-      };
-    });
+  // Acumular fuerza por usuario
+  golpes.forEach(g => {
+    const idUsuario = g.UsuarioEntrenamiento.id_usuario;
+    if (rankingMap[idUsuario]) {
+      rankingMap[idUsuario].totalFuerza += g.fuerza;
+    }
+  });
 
-    const { data: golpes, error: errorGolpes } = await supabase
-      .from('Golpes')
-      .select(`
-        fuerza,
-        UsuarioEntrenamiento (
-          id_usuario
-        )
-      `)
-      .in('UsuarioEntrenamiento.id_usuario', Object.keys(rankingMap));
+  const ranking = Object.values(rankingMap).sort((a, b) => b.totalFuerza - a.totalFuerza);
 
-    if (errorGolpes) throw errorGolpes;
+  // Obtener datos del usuario actual
+  const { data: usuarioEntr } = await getUsuarioEntrenamientoById(id_usuarioEntrenamiento);
+  if (!usuarioEntr) throw new Error("UsuarioEntrenamiento no encontrado");
 
-    golpes.forEach(golpe => {
-      const idUsuario = golpe.UsuarioEntrenamiento.id_usuario;
-      if (rankingMap[idUsuario]) {
-        rankingMap[idUsuario].totalFuerza += golpe.fuerza;
-      }
-    });
+  const id_usuario = usuarioEntr.id_usuario;
 
-    const ranking = Object.values(rankingMap).sort((a, b) => b.totalFuerza - a.totalFuerza);
-    return { data: ranking };
-  } catch (error) {
-    console.error("Error en getRankingGolpesService:", error);
-    return { error: "No se pudo obtener el ranking" };
-  }
+  // Suma total de fuerza del usuario
+  const { data: golpesData } = await getSumaFuerzaUsuario(id_usuarioEntrenamiento);
+
+  // Datos del usuario (incluye país)
+  const { data: usuarioData } = await getUsuarioDatos(id_usuario);
+
+  return {
+    ranking,
+    usuario: {
+      nombreCompleto: usuarioData.nombreCompleto,
+      email: usuarioData.email,
+      pais: usuarioData.Paises?.pais || null
+    },
+    suma_fuerza: golpesData?.suma_fuerza || 0
+  };
 };
