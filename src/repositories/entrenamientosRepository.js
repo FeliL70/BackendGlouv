@@ -12,3 +12,20 @@ export const getEntrenamientosByIds = async (ids) => {
     .select('id, nombre, foto, descripcion, duracion')
     .in('id', ids);
 };
+
+export const getEntrenamientoRealtime = async (userId, entrenamientoId) => {
+  return await supabase
+    .from('Usuarios')
+    .select(`
+      nombre,
+      email,
+      pais,
+      EntrenamientosUsuario (
+        id,
+        golpes
+      )
+    `)
+    .eq('id', userId)
+    .eq('EntrenamientosUsuario.entrenamiento_id', entrenamientoId)
+    .single();
+};

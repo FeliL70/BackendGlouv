@@ -14,6 +14,7 @@ import { getEstadisticasPorFecha } from './controllers/calendarioController.js';
 import { crearUsuarioEntrenamiento, actualizarTiempoEntrenamiento } from './controllers/usuarioEntrenamientoController.js';
 import { getTipoDeCuerpo, getTiposDeCuerpo } from './controllers/tipoDeCuerpoController.js';
 import { getPaises } from './controllers/paisesController.js';
+import { getEntrenamientoRealtimeController } from "./controllers/entrenamientosController.js";
 import {
   getTorneos,
   crearTorneo,
@@ -76,6 +77,8 @@ api.get('/torneos/ranking', getRankingGlobal);
 api.post('/torneos/cargar-puntos', cargarPuntosEntrenamiento);
 api.get('/torneos/usuario', getTorneosDelUsuario);
 api.get('/torneos/participantes', getParticipantesTorneo);
+
+app.get("/entrenamiento/realtime/:userId/:entrenamientoId", getEntrenamientoRealtimeController);
 
 app.use('/api', api);
 

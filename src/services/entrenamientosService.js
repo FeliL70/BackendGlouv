@@ -19,3 +19,16 @@ export const getEntrenamientosService = async (ids) => {
     return { error: "Error al obtener entrenamientos." };
   }
 };
+
+export const getEntrenamientoRealtimeService = async (userId, entrenamientoId) => {
+  const { data, error } = await getEntrenamientoRealtime(userId, entrenamientoId);
+
+  if (error) throw error;
+
+  return {
+    nombre: data.nombre,
+    email: data.email,
+    pais: data.pais,
+    golpes: data.EntrenamientosUsuario[0]?.golpes || 0
+  };
+};

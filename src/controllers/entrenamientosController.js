@@ -22,3 +22,14 @@ export const getEntrenamientos = async (req, res) => {
 
   res.json(data);
 };
+
+
+export const getEntrenamientoRealtimeController = async (req, res) => {
+  try {
+    const { userId, entrenamientoId } = req.params;
+    const result = await getEntrenamientoRealtimeService(userId, entrenamientoId);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
