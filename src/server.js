@@ -5,15 +5,15 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Controllers
-import { getEntrenamientos } from './src/controllers/entrenamientosController.js';
-import { getTiempoEntrenado } from './src/controllers/tiempoController.js';
-import { loginUser, registerUser } from './src/controllers/authController.js';
-import { getRankingGolpes, getSumaGolpes, postGolpe } from './src/controllers/golpesController.js';
-import { getPerfil } from './src/controllers/userController.js';
-import { getEstadisticasPorFecha } from './src/controllers/calendarioController.js';
-import { crearUsuarioEntrenamiento, actualizarTiempoEntrenamiento } from './src/controllers/usuarioEntrenamientoController.js';
-import { getTipoDeCuerpo, getTiposDeCuerpo } from './src/controllers/tipoDeCuerpoController.js';
-import { getPaises } from './src/controllers/paisesController.js';
+import { getEntrenamientos } from './controllers/entrenamientosController.js';
+import { getTiempoEntrenado } from './controllers/tiempoController.js';
+import { loginUser, registerUser } from './controllers/authController.js';
+import { getRankingGolpes, getSumaGolpes, postGolpe } from './controllers/golpesController.js';
+import { getPerfil } from './controllers/userController.js';
+import { getEstadisticasPorFecha } from './controllers/calendarioController.js';
+import { crearUsuarioEntrenamiento, actualizarTiempoEntrenamiento } from './controllers/usuarioEntrenamientoController.js';
+import { getTipoDeCuerpo, getTiposDeCuerpo } from './controllers/tipoDeCuerpoController.js';
+import { getPaises } from './controllers/paisesController.js';
 import {
   getTorneos,
   crearTorneo,
@@ -22,7 +22,7 @@ import {
   cargarPuntosEntrenamiento,
   getTorneosDelUsuario,
   getParticipantesTorneo
-} from './src/controllers/torneosController.js';
+} from './controllers/torneosController.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;

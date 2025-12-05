@@ -4,21 +4,18 @@ import {
   getGolpesDeUsuarios,
   getUsuarioEntrenamientoById,
   getSumaFuerzaUsuario,
-  getUsuarioDatos
+  getUsuarioDatos,
+  createGolpe                       // NUEVO 🔥
 } from '../repositories/golpesRepository.js';
 
+// ========================== RANKING DE GOLPES ============================= //
 export const obtenerRankingGolpes = async (id_torneo, id_usuarioEntrenamiento) => {
   
-  // Obtener usuarios del torneo
   const { data: usuariosTorneo, error: errorTorneo } = await getUsuariosDelTorneo(id_torneo);
-
   if (errorTorneo) throw new Error("No se pudieron obtener usuarios del torneo");
 
-  if (!usuariosTorneo || usuariosTorneo.length === 0) {
-    return { ranking: [], usuario: null, suma_fuerza: 0 };
-  }
+  if (!usuariosTorneo?.length) return { ranking: [], usuario: null, suma_fuerza: 0 };
 
-  // Crear ranking base
   const rankingMap = {};
   const idUsuarios = [];
 
@@ -33,31 +30,22 @@ export const obtenerRankingGolpes = async (id_torneo, id_usuarioEntrenamiento) =
     idUsuarios.push(u.Usuarios.id);
   });
 
-  // Obtener golpes de todos los usuarios del torneo
   const { data: golpes, error: errorGolpes } = await getGolpesDeUsuarios(idUsuarios);
-
   if (errorGolpes) throw new Error("No se pudieron obtener los golpes");
 
-  // Acumular fuerza por usuario
   golpes.forEach(g => {
     const idUsuario = g.UsuarioEntrenamiento.id_usuario;
-    if (rankingMap[idUsuario]) {
-      rankingMap[idUsuario].totalFuerza += g.fuerza;
-    }
+    if (rankingMap[idUsuario]) rankingMap[idUsuario].totalFuerza += g.fuerza;
   });
 
   const ranking = Object.values(rankingMap).sort((a, b) => b.totalFuerza - a.totalFuerza);
 
-  // Obtener datos del usuario actual
   const { data: usuarioEntr } = await getUsuarioEntrenamientoById(id_usuarioEntrenamiento);
   if (!usuarioEntr) throw new Error("UsuarioEntrenamiento no encontrado");
 
   const id_usuario = usuarioEntr.id_usuario;
 
-  // Suma total de fuerza del usuario
   const { data: golpesData } = await getSumaFuerzaUsuario(id_usuarioEntrenamiento);
-
-  // Datos del usuario (incluye país)
   const { data: usuarioData } = await getUsuarioDatos(id_usuario);
 
   return {
@@ -67,6 +55,23 @@ export const obtenerRankingGolpes = async (id_torneo, id_usuarioEntrenamiento) =
       email: usuarioData.email,
       pais: usuarioData.Paises?.pais || null
     },
-    suma_fuerza: golpesData?.suma_fuerza || 0
+    suma_fuerza: golpesData?.suma_fuerza ?? 0
   };
+};
+
+
+// ========================== SUMA DE GOLPES ============================= //
+export const obtenerSumaGolpes = async (id_usuarioEntrenamiento) => {
+  const { data } = await getSumaFuerzaUsuario(id_usuarioEntrenamiento);
+  return data?.suma_fuerza ?? 0;
+};
+
+
+// ========================== REGISTRAR NUEVO GOLPE ============================= //
+export const guardarNuevoGolpe = async (id_usuarioEntrenamiento, fuerza, id_guante) => {
+
+  const { data, error } = await createGolpe(id_usuarioEntrenamiento, fuerza, id_guante);
+  if (error) throw new Error("Error al guardar golpe");
+
+  return data;
 };
